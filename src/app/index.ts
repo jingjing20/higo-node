@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import userRouter from '../user/user.router';
 import emailRouter from '../email/email.router';
-import { responseFormatter, errorHandler } from './app.middleware';
+import { errorHandler, requestTimeLogger } from './app.middleware';
 import { ALLOW_ORIGIN } from './app.config';
 
 /**
@@ -11,9 +11,9 @@ import { ALLOW_ORIGIN } from './app.config';
 const app = express();
 
 /**
- * 应用中间件（在路由之前）
+ * 请求耗时统计中间件（最先注册，以便记录完整请求时间）
  */
-app.use(responseFormatter());
+app.use(requestTimeLogger);
 
 /**
  * 处理 JSON

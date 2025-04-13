@@ -24,11 +24,11 @@ export const createUser = async (user: UserModel) => {
 
   try {
     // 检查邮箱是否已存在
-    const [existingUsers] = await queryAsync(
+    const existingUsers = await queryAsync(
       'SELECT * FROM users WHERE email = ?',
       [email]
     );
-    if (Array.isArray(existingUsers) && existingUsers.length > 0) {
+    if (existingUsers && existingUsers.length > 0) {
       return { success: false, message: '邮箱已被注册' };
     }
 
@@ -96,11 +96,11 @@ export const loginUser = async (userInfo: UserModel) => {
 
   try {
     // 查找用户
-    const [users] = await queryAsync('SELECT * FROM users WHERE email = ?', [
+    const users = await queryAsync('SELECT * FROM users WHERE email = ?', [
       email
     ]);
 
-    if (!Array.isArray(users) || users.length === 0) {
+    if (!users || users.length === 0) {
       return { success: false, message: '用户不存在' };
     }
 
@@ -152,11 +152,11 @@ export const loginUser = async (userInfo: UserModel) => {
 export const forgotPassword = async (email: string) => {
   try {
     // 查找用户
-    const [users] = await queryAsync('SELECT * FROM users WHERE email = ?', [
+    const users = await queryAsync('SELECT * FROM users WHERE email = ?', [
       email
     ]);
 
-    if (!Array.isArray(users) || users.length === 0) {
+    if (!users || users.length === 0) {
       return { success: false, message: '用户不存在' };
     }
 
@@ -189,12 +189,12 @@ export const forgotPassword = async (email: string) => {
 export const resetPassword = async (token: string, newPassword: string) => {
   try {
     // 查找验证令牌
-    const [tokens] = await queryAsync(
+    const tokens = await queryAsync(
       `SELECT * FROM verification_tokens WHERE token = ? AND type = ? AND expires_at > NOW()`,
       [token, 'password_reset']
     );
 
-    if (!Array.isArray(tokens) || tokens.length === 0) {
+    if (!tokens || tokens.length === 0) {
       return { success: false, message: '无效或已过期的密码重置链接' };
     }
 
@@ -233,10 +233,10 @@ export const refreshToken = async (refreshToken: string) => {
     }
 
     // 查找用户
-    const [users] = await queryAsync('SELECT * FROM users WHERE id = ?', [
+    const users = await queryAsync('SELECT * FROM users WHERE id = ?', [
       payload.id
     ]);
-    if (!Array.isArray(users) || users.length === 0) {
+    if (!users || users.length === 0) {
       return { success: false, message: '用户不存在' };
     }
 
@@ -259,13 +259,13 @@ export const refreshToken = async (refreshToken: string) => {
  */
 export const getUserProfile = async (userId: number) => {
   try {
-    const [users] = await queryAsync(
+    const users = await queryAsync(
       `SELECT id, email, nickname, avatar_url, bio, gender, location, is_verified, is_active, created_at
        FROM users WHERE id = ?`,
       [userId]
     );
 
-    if (!Array.isArray(users) || users.length === 0) {
+    if (!users || users.length === 0) {
       return { success: false, message: '用户不存在' };
     }
 
