@@ -26,9 +26,6 @@ router.post('/api/auth/password/forgot', userController.forgotPassword);
 // 重置密码
 router.post('/api/auth/password/reset', userController.resetPassword);
 
-// 验证邮箱
-router.post('/api/auth/verify', userController.verifyEmail);
-
 // 刷新令牌
 router.post('/api/auth/refresh', userController.refreshUserToken);
 

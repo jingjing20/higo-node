@@ -16,7 +16,7 @@ export const register = async (
   try {
     const result = await userService.createUser({ email, password, nickname });
     if (result.success) {
-      response.status(201).send(result);
+      response.status(200).send(result);
     } else {
       throw new Error(`${result.message}`);
     }
@@ -59,30 +59,6 @@ export const logout = async (
 ) => {
   // 客户端应该清除令牌，服务端不需要处理
   response.status(200).send({ success: true, message: '登出成功' });
-};
-
-/**
- * 验证邮箱
- */
-export const verifyEmail = async (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
-  // 准备数据
-  const { token } = request.body;
-
-  // 验证邮箱
-  try {
-    const result = await userService.verifyEmail(token);
-    if (result.success) {
-      response.status(200).send(result);
-    } else {
-      throw new Error(`${result.message}`);
-    }
-  } catch (error) {
-    next(error);
-  }
 };
 
 /**

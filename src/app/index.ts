@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import userRouter from '../user/user.router';
+import emailRouter from '../email/email.router';
 import { responseFormatter, errorHandler } from './app.middleware';
 import { ALLOW_ORIGIN } from './app.config';
 
@@ -43,6 +44,7 @@ app.use(
  * 路由
  */
 app.use(userRouter);
+app.use(emailRouter);
 
 /**
  * 应用错误处理中间件（在路由之后）

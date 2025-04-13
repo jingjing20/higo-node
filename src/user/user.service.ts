@@ -8,6 +8,7 @@ import {
 } from './auth.util';
 import { promisify } from 'util';
 import * as jwt from 'jsonwebtoken';
+import * as emailService from '../email/email.service';
 
 // JWT密钥 - 实际生产环境应该放在环境变量中
 const JWT_SECRET = 'your-jwt-secret-key';
@@ -44,9 +45,22 @@ export const createUser = async (user: UserModel) => {
     const userId = result.insertId;
 
     // 创建验证令牌
-    await createVerificationToken(userId, 'email');
+    const tokenResult = await createVerificationToken(userId, 'email');
 
-    return { success: true, message: '注册成功，请检查邮箱完成验证', userId };
+    if (tokenResult.success && tokenResult.token) {
+      // 发送验证邮件
+      await emailService.sendVerificationEmail(
+        email,
+        tokenResult.token,
+        nickname
+      );
+    }
+
+    return {
+      success: true,
+      message: '注册成功，请检查邮箱完成验证才可登录',
+      userId
+    };
   } catch (error) {
     console.error('创建用户失败:', error);
     return { success: false, message: '注册失败' };
@@ -67,47 +81,10 @@ export const createVerificationToken = async (userId: number, type: string) => {
       [userId, token, type, expiresAt]
     );
 
-    // 这里应该发送包含token的验证邮件
-    // sendVerificationEmail(email, token);
-
     return { success: true, token };
   } catch (error) {
     console.error('创建验证令牌失败:', error);
     return { success: false, message: '创建验证令牌失败' };
-  }
-};
-
-/**
- * 验证邮箱
- */
-export const verifyEmail = async (token: string) => {
-  try {
-    // 查找验证令牌
-    const [tokens] = await queryAsync(
-      `SELECT * FROM verification_tokens WHERE token = ? AND type = ? AND expires_at > NOW()`,
-      [token, 'email']
-    );
-
-    if (!Array.isArray(tokens) || tokens.length === 0) {
-      return { success: false, message: '无效或已过期的验证令牌' };
-    }
-
-    const verificationToken = tokens[0] as VerificationTokenModel;
-
-    // 更新用户的验证状态
-    await queryAsync(`UPDATE users SET is_verified = 1 WHERE id = ?`, [
-      verificationToken.user_id
-    ]);
-
-    // 删除已使用的验证令牌
-    await queryAsync(`DELETE FROM verification_tokens WHERE id = ?`, [
-      verificationToken.id
-    ]);
-
-    return { success: true, message: '邮箱验证成功' };
-  } catch (error) {
-    console.error('验证邮箱失败:', error);
-    return { success: false, message: '验证邮箱失败' };
   }
 };
 
@@ -192,8 +169,12 @@ export const forgotPassword = async (email: string) => {
       return result;
     }
 
-    // 应该发送包含重置密码链接的邮件
-    // sendPasswordResetEmail(email, result.token);
+    // 发送密码重置邮件
+    await emailService.sendPasswordResetEmail(
+      email,
+      result.token,
+      user.nickname
+    );
 
     return { success: true, message: '密码重置链接已发送到您的邮箱' };
   } catch (error) {

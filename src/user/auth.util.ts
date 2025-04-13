@@ -60,3 +60,10 @@ export const generateExpiryDate = (hours: number) => {
   expiryDate.setHours(expiryDate.getHours() + hours);
   return expiryDate;
 };
+
+/**
+ * 判断是否过期
+ */
+export const isExpired = (expiryDate: Date) => {
+  return expiryDate < new Date();
+};
