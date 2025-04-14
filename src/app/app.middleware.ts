@@ -1,13 +1,4 @@
-// 错误处理中间件
-export const errorHandler = (err, req, res, next) => {
-  console.error(err.stack);
-  res
-    .status(500)
-    .error(
-      process.env.NODE_ENV === 'production' ? '服务器内部错误' : err.message,
-      500
-    );
-};
+import { Request, Response, NextFunction } from 'express';
 
 /**
  * 接口耗时统计中间件
@@ -90,4 +81,108 @@ export const requestTimeLogger = (req, res, next) => {
 
   // 继续处理请求
   next();
+};
+
+/**
+ * 统一响应数据格式中间件
+ * 格式: {success: true, data: { "xxx": "xxx" }, message: "xxx"}
+ */
+export const responseFormatter = (req, res, next) => {
+  // 保存原始的方法
+  const originalJson = res.json;
+  const originalSend = res.send;
+
+  // 重写json方法
+  res.json = function (data) {
+    const formattedData = {
+      success: data.success,
+      message: data.message || '操作成功',
+      data: data.data || {}
+    };
+
+    return originalJson.call(this, formattedData);
+  };
+
+  // 重写send方法
+  res.send = function (data) {
+    // 如果不是对象类型，则直接发送（如文件下载等情况）
+    if (typeof data !== 'object' || data === null) {
+      return originalSend.call(this, data);
+    }
+
+    // 否则格式化数据
+    const formattedData = {
+      success: data.success,
+      message: data.message || '操作成功',
+      data: data.data || {}
+    };
+
+    return originalSend.call(this, formattedData);
+  };
+
+  next();
+};
+
+/**
+ * 默认异常处理器
+ */
+export const defaultErrorHandler = (
+  error: any,
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  if (error.message) {
+    console.log('🚧', error.message);
+  }
+
+  let statusCode: number, message: string;
+
+  /**
+   * 处理异常
+   */
+  switch (error.message) {
+    case 'INVALID_USERNAME':
+      statusCode = 400;
+      message = '用户名错误';
+      break;
+    case 'USER_NOT_FOUND':
+      statusCode = 400;
+      message = '用户不存在';
+      break;
+    case 'EMAIL_ALREADY_EXISTS':
+      statusCode = 400;
+      message = '邮箱已存在';
+      break;
+    case 'INVALID_PASSWORD':
+      statusCode = 400;
+      message = '密码错误';
+      break;
+    case 'INVALID_TOKEN':
+      statusCode = 401;
+      message = '无效的令牌';
+      break;
+    case 'TOKEN_EXPIRED':
+      statusCode = 401;
+      message = '令牌已过期';
+      break;
+    case 'REFRESH_TOKEN_EXPIRED':
+      statusCode = 401;
+      message = '刷新令牌已过期';
+      break;
+    case 'PASSWORD_RESET_TOKEN_EXPIRED':
+      statusCode = 401;
+      message = '密码重置令牌已过期';
+      break;
+    case 'INVALID_EMAIL':
+      statusCode = 400;
+      message = '无效的邮箱';
+      break;
+    case 'INVALID_PASSWORD':
+      statusCode = 400;
+      message = '密码错误';
+      break;
+  }
+
+  response.json({ success: false, code: statusCode, message });
 };

@@ -4,8 +4,8 @@ export const EMAIL_CONFIG = {
   PORT: parseInt(process.env.SMTP_PORT || '465', 10),
   SECURE: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
   AUTH: {
-    USER: process.env.SMTP_USER || '1269928993@qq.com',
-    PASS: process.env.SMTP_PASSWORD || 'ekemgxxcecwdfgia'
+    USER: process.env.SMTP_USER,
+    PASS: process.env.SMTP_PASSWORD
   }
 };
 

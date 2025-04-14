@@ -195,7 +195,10 @@ export const resetPassword = async (token: string, newPassword: string) => {
     );
 
     if (!tokens || tokens.length === 0) {
-      return { success: false, message: '无效或已过期的密码重置链接' };
+      return {
+        success: false,
+        message: 'INVALID_OR_EXPIRED_PASSWORD_RESET_LINK'
+      };
     }
 
     const verificationToken = tokens[0] as VerificationTokenModel;
@@ -217,7 +220,7 @@ export const resetPassword = async (token: string, newPassword: string) => {
     return { success: true, message: '密码重置成功' };
   } catch (error) {
     console.error('重置密码失败:', error);
-    return { success: false, message: '重置密码失败' };
+    return { success: false, message: 'RESET_PASSWORD_FAILED' };
   }
 };
 
@@ -229,7 +232,7 @@ export const refreshToken = async (refreshToken: string) => {
     // 验证刷新令牌
     const payload = jwt.verify(refreshToken, JWT_SECRET) as any;
     if (!payload || !payload.id) {
-      return { success: false, message: '无效的刷新令牌' };
+      return { success: false, message: 'INVALID_REFRESH_TOKEN' };
     }
 
     // 查找用户
@@ -237,7 +240,7 @@ export const refreshToken = async (refreshToken: string) => {
       payload.id
     ]);
     if (!users || users.length === 0) {
-      return { success: false, message: '用户不存在' };
+      return { success: false, message: 'USER_NOT_FOUND' };
     }
 
     // 生成新的令牌
@@ -250,7 +253,7 @@ export const refreshToken = async (refreshToken: string) => {
     };
   } catch (error) {
     console.error('刷新令牌失败:', error);
-    return { success: false, message: '刷新令牌失败' };
+    return { success: false, message: 'REFRESH_TOKEN_FAILED' };
   }
 };
 
@@ -266,13 +269,13 @@ export const getUserProfile = async (userId: number) => {
     );
 
     if (!users || users.length === 0) {
-      return { success: false, message: '用户不存在' };
+      return { success: false, message: 'USER_NOT_FOUND' };
     }
 
     return { success: true, user: users[0] };
   } catch (error) {
     console.error('获取用户详情失败:', error);
-    return { success: false, message: '获取用户详情失败' };
+    return { success: false, message: 'GET_USER_PROFILE_FAILED' };
   }
 };
 
@@ -294,7 +297,7 @@ export const updateUserProfile = async (
     return { success: true, message: '个人信息更新成功' };
   } catch (error) {
     console.error('更新用户信息失败:', error);
-    return { success: false, message: '更新用户信息失败' };
+    return { success: false, message: 'UPDATE_USER_PROFILE_FAILED' };
   }
 };
 
@@ -311,6 +314,6 @@ export const updateUserAvatar = async (userId: number, avatarUrl: string) => {
     return { success: true, message: '头像更新成功', avatarUrl };
   } catch (error) {
     console.error('更新用户头像失败:', error);
-    return { success: false, message: '更新用户头像失败' };
+    return { success: false, message: 'UPDATE_USER_AVATAR_FAILED' };
   }
 };

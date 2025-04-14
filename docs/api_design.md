@@ -11,7 +11,8 @@
 - 请求格式: JSON
 - 响应格式: JSON
 - 状态码: 标准HTTP状态码
-- 错误处理: 统一错误响应格式 `{"code": xxx, "message": "xxx"}`
+- 错误处理: 统一错误响应格式 `{success: false, code: xxx, message: "xxx"}`
+- 统一数据结构返回: `{success: true, data: { "xxx": "xxx" }, message: "xxx"}`
 
 ## V1.0 基础版 API
 

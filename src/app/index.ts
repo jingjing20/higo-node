@@ -2,7 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import userRouter from '../user/user.router';
 import emailRouter from '../email/email.router';
-import { errorHandler, requestTimeLogger } from './app.middleware';
+import {
+  requestTimeLogger,
+  responseFormatter,
+  defaultErrorHandler
+} from './app.middleware';
 import { ALLOW_ORIGIN } from './app.config';
 
 /**
@@ -41,6 +45,11 @@ app.use(
 );
 
 /**
+ * 响应格式化中间件（在路由之前注册）
+ */
+app.use(responseFormatter);
+
+/**
  * 路由
  */
 app.use(userRouter);
@@ -49,7 +58,8 @@ app.use(emailRouter);
 /**
  * 应用错误处理中间件（在路由之后）
  */
-app.use(errorHandler);
+app.use(defaultErrorHandler);
+
 /**
  * 导出应用
  */

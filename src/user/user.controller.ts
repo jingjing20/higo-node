@@ -238,7 +238,7 @@ export const getUserById = async (
         location: user.location
       };
 
-      response.status(200).send({ success: true, user: publicUser });
+      response.status(200).send({ success: true, data: publicUser });
     } else {
       throw new Error(`${result.message}`);
     }
