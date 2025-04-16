@@ -1,9 +1,5 @@
-import { connection } from '../app/database/mysql';
 import { CategoryModel } from './categories.model';
-import { promisify } from 'util';
-
-// 将connection.query转换为Promise形式
-const queryAsync = promisify(connection.query).bind(connection);
+import { queryAsync } from '../app/database/database.utils';
 
 /**
  * 获取所有运动类别

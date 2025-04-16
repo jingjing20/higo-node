@@ -1,4 +1,3 @@
-import { connection } from '../app/database/mysql';
 import { UserModel, VerificationTokenModel } from './user.model';
 import * as bcrypt from 'bcrypt';
 import {
@@ -6,15 +5,12 @@ import {
   generateVerificationToken,
   generateExpiryDate
 } from './auth.util';
-import { promisify } from 'util';
 import * as jwt from 'jsonwebtoken';
 import * as emailService from '../email/email.service';
+import { queryAsync } from '../app/database/database.utils';
 
 // JWT密钥 - 实际生产环境应该放在环境变量中
 const JWT_SECRET = 'your-jwt-secret-key';
-
-// 将connection.query转换为Promise形式
-const queryAsync = promisify(connection.query).bind(connection);
 
 /**
  * 创建用户

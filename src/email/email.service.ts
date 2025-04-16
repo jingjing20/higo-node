@@ -2,11 +2,7 @@ import nodemailer from 'nodemailer';
 import { EMAIL_CONFIG, SENDER } from './email.config';
 import { verificationEmailTemplate } from './templates/verification';
 import { passwordResetEmailTemplate } from './templates/password-reset';
-import { connection } from '../app/database/mysql';
-import { promisify } from 'util';
-
-// 将connection.query转换为Promise形式
-const queryAsync = promisify(connection.query).bind(connection);
+import { queryAsync } from '../app/database/database.utils';
 
 /**
  * 创建Nodemailer发送器
