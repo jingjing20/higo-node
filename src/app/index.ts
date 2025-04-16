@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import userRouter from '../user/user.router';
 import emailRouter from '../email/email.router';
+import categoryRouter from '../categories/categories.router';
 import {
   requestTimeLogger,
   responseFormatter,
@@ -54,6 +55,7 @@ app.use(responseFormatter);
  */
 app.use(userRouter);
 app.use(emailRouter);
+app.use(categoryRouter);
 
 /**
  * 应用错误处理中间件（在路由之后）
