@@ -17,6 +17,21 @@ alwaysApply: true
 
 在理解用户需求、编写代码、解决问题和迭代项目时，您应始终遵循以下原则：
 
+### 需求 prd
+
+[prd.md](mdc:docs/prd.md)
+
+### 接口设计文档
+
+[api_design.md](mdc:docs/api_design.md)
+
+### 数据库设计文档
+
+[database_design_01.md](mdc:docs/database_design_01.md)
+[database_design_02.md](mdc:docs/database_design_02.md)
+[database_design_03.md](mdc:docs/database_design_03.md)
+[database_design_04.md](mdc:docs/database_design_04.md)
+
 ### 理解需求
 
 -   充分理解用户需求，站在用户的角度思考，分析是否存在任何遗漏的需求，并与用户讨论改进需求。
@@ -45,7 +60,7 @@ alwaysApply: true
 
 ## 参考资源
 
--   [TypeScript 文档](https://www.typescriptlang.org/docs/)
--   [Express.js 文档](https://expressjs.com/en/4x/api.html)
--   [MySQL 文档](https://dev.mysql.com/doc/)
--   [mysql2 文档](https://sidorares.github.io/node-mysql2/docs/documentation)
+-   [TypeScript 文档](mdc:https:/www.typescriptlang.org/docs)
+-   [Express.js 文档](mdc:https:/expressjs.com/en/4x/api.html)
+-   [MySQL 文档](mdc:https:/dev.mysql.com/doc)
+-   [mysql2 文档](mdc:https:/sidorares.github.io/node-mysql2/docs/documentation)

@@ -11,6 +11,9 @@ const router = express.Router();
 // 获取所有运动类别
 router.get('/api/categories', categoryController.getAllCategories);
 
+// 批量获取指定类别
+router.get('/api/categories/batch', categoryController.getBatchCategories);
+
 // 创建运动类别（管理员API）
 router.post(
   '/api/admin/categories',
@@ -34,6 +37,13 @@ router.post(
   authGuard,
   validateCategoryExists,
   categoryController.followCategory
+);
+
+// 批量关注运动类别
+router.post(
+  '/api/users/me/categories/batch',
+  authGuard,
+  categoryController.followBatchCategories
 );
 
 // 取消关注运动类别

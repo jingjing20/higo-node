@@ -22,6 +22,52 @@ export const getAllCategories = async (
 };
 
 /**
+ * 批量获取类别详情
+ */
+export const getBatchCategories = async (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  // 准备数据
+  const { categoryIds } = request.query;
+
+  if (!categoryIds) {
+    return next(new Error('类别ID列表不能为空'));
+  }
+
+  try {
+    // 将逗号分隔的ID转换为数组并解析为整数
+    const idArray = (categoryIds as string)
+      .split(',')
+      .map((id) => parseInt(id.trim(), 10));
+
+    // 过滤掉无效的ID
+    const validIds = idArray.filter((id) => !isNaN(id));
+
+    if (validIds.length === 0) {
+      return next(new Error('没有提供有效的类别ID'));
+    }
+
+    // 获取批量类别结果
+    const promises = validIds.map((id) => categoryService.getCategoryById(id));
+    const results = await Promise.all(promises);
+
+    // 筛选出成功获取的类别
+    const categories = results
+      .filter((result) => result.success)
+      .map((result) => result.data);
+
+    response.status(200).send({
+      success: true,
+      data: categories
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * 创建运动类别（管理员）
  */
 export const createCategory = async (
@@ -158,6 +204,46 @@ export const getUserCategories = async (
 
   try {
     const result = await categoryService.getUserCategories(userId);
+    if (result.success) {
+      response.status(200).send(result);
+    } else {
+      throw new Error(`${result.message}`);
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 用户批量关注类别
+ */
+export const followBatchCategories = async (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  // 准备数据
+  const userId = request.user.id;
+  const { categoryIds } = request.body;
+
+  if (!categoryIds || !Array.isArray(categoryIds) || categoryIds.length === 0) {
+    return next(new Error('类别ID数组不能为空'));
+  }
+
+  // 将所有ID转换为整数
+  const validIds = categoryIds
+    .map((id) => parseInt(id, 10))
+    .filter((id) => !isNaN(id));
+
+  if (validIds.length === 0) {
+    return next(new Error('没有提供有效的类别ID'));
+  }
+
+  try {
+    const result = await categoryService.followBatchCategories(
+      userId,
+      validIds
+    );
     if (result.success) {
       response.status(200).send(result);
     } else {

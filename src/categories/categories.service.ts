@@ -161,7 +161,7 @@ export const followCategory = async (userId: number, categoryId: number) => {
 
     // 检查是否已关注
     const existingRelations = await queryAsync(
-      'SELECT * FROM user_categories WHERE user_id = ? AND category_id = ?',
+      'SELECT * FROM user_category_preferences WHERE user_id = ? AND category_id = ?',
       [userId, categoryId]
     );
 
@@ -171,7 +171,7 @@ export const followCategory = async (userId: number, categoryId: number) => {
 
     // 添加关注关系
     await queryAsync(
-      'INSERT INTO user_categories (user_id, category_id) VALUES (?, ?)',
+      'INSERT INTO user_category_preferences (user_id, category_id) VALUES (?, ?)',
       [userId, categoryId]
     );
 
@@ -179,6 +179,71 @@ export const followCategory = async (userId: number, categoryId: number) => {
   } catch (error) {
     console.error('关注类别失败:', error);
     return { success: false, message: '关注类别失败' };
+  }
+};
+
+/**
+ * 用户批量关注类别
+ */
+export const followBatchCategories = async (
+  userId: number,
+  categoryIds: number[]
+) => {
+  try {
+    if (!categoryIds.length) {
+      return { success: false, message: '未提供类别ID' };
+    }
+
+    // 验证所有类别是否存在
+    const categoryPromises = categoryIds.map((id) => getCategoryById(id));
+    const categoryResults = await Promise.all(categoryPromises);
+
+    const invalidCategories = categoryResults
+      .map((result, index) => ({ result, id: categoryIds[index] }))
+      .filter((item) => !item.result.success);
+
+    if (invalidCategories.length > 0) {
+      return {
+        success: false,
+        message: `以下类别ID不存在: ${invalidCategories.map((item) => item.id).join(', ')}`
+      };
+    }
+
+    // 检查哪些类别已经关注过
+    const existingRelations = await queryAsync(
+      'SELECT category_id FROM user_category_preferences WHERE user_id = ? AND category_id IN (?)',
+      [userId, categoryIds]
+    );
+
+    const existingCategoryIds = new Set(
+      existingRelations.map((row) => row.category_id)
+    );
+    const newCategoryIds = categoryIds.filter(
+      (id) => !existingCategoryIds.has(id)
+    );
+
+    if (newCategoryIds.length === 0) {
+      return { success: false, message: '所有提供的类别均已关注' };
+    }
+
+    // 批量插入新关注
+    const values = newCategoryIds.map((categoryId) => [userId, categoryId]);
+    await queryAsync(
+      'INSERT INTO user_category_preferences (user_id, category_id) VALUES ?',
+      [values]
+    );
+
+    return {
+      success: true,
+      message: `成功关注${newCategoryIds.length}个类别`,
+      data: {
+        followedCount: newCategoryIds.length,
+        alreadyFollowedCount: categoryIds.length - newCategoryIds.length
+      }
+    };
+  } catch (error) {
+    console.error('批量关注类别失败:', error);
+    return { success: false, message: '批量关注类别失败' };
   }
 };
 
@@ -195,7 +260,7 @@ export const unfollowCategory = async (userId: number, categoryId: number) => {
 
     // 检查是否已关注
     const existingRelations = await queryAsync(
-      'SELECT * FROM user_categories WHERE user_id = ? AND category_id = ?',
+      'SELECT * FROM user_category_preferences WHERE user_id = ? AND category_id = ?',
       [userId, categoryId]
     );
 
@@ -205,7 +270,7 @@ export const unfollowCategory = async (userId: number, categoryId: number) => {
 
     // 删除关注关系
     await queryAsync(
-      'DELETE FROM user_categories WHERE user_id = ? AND category_id = ?',
+      'DELETE FROM user_category_preferences WHERE user_id = ? AND category_id = ?',
       [userId, categoryId]
     );
 
@@ -223,8 +288,8 @@ export const getUserCategories = async (userId: number) => {
   try {
     const categories = await queryAsync(
       `SELECT c.* FROM categories c
-       INNER JOIN user_categories uc ON c.id = uc.category_id
-       WHERE uc.user_id = ?
+       INNER JOIN user_category_preferences ucp ON c.id = ucp.category_id
+       WHERE ucp.user_id = ?
        ORDER BY c.name`,
       [userId]
     );
