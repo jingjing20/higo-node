@@ -94,7 +94,18 @@
 - `POST /api/posts/{postId}/share` - 分享统计
 - `GET /api/users/mention/suggest` - 获取@用户建议
 
-### 3. 消息通知中心 API
+### 3. 评论系统增强 API
+
+- `PUT /api/comments/{commentId}` - 更新评论内容
+- `DELETE /api/comments/{commentId}` - 删除评论
+- `POST /api/comments/{commentId}/likes` - 点赞评论
+- `DELETE /api/comments/{commentId}/likes` - 取消评论点赞
+- `POST /api/comments/{commentId}/reply` - 回复评论
+- `GET /api/comments/{commentId}/replies` - 获取评论回复
+- `GET /api/users/me/comments` - 获取用户发表的所有评论
+- `GET /api/users/me/comment-likes` - 获取用户点赞的评论
+
+### 4. 消息通知中心 API
 
 - `GET /api/notifications` - 获取通知列表
 - `PUT /api/notifications/{notificationId}/read` - 标记通知为已读
@@ -102,7 +113,7 @@
 - `GET /api/notifications/settings` - 获取通知设置
 - `PUT /api/notifications/settings` - 更新通知设置
 
-### 4. 违规举报 API
+### 5. 违规举报 API
 
 - `POST /api/reports/post/{postId}` - 举报帖子
 - `POST /api/reports/comment/{commentId}` - 举报评论
