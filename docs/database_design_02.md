@@ -6,38 +6,7 @@
 
 ### 场地相关表
 
-#### 1. `comment_likes` 表 - 评论点赞
-
-```sql
-CREATE TABLE comment_likes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    comment_id INT NOT NULL COMMENT '评论ID',
-    user_id INT NOT NULL COMMENT '点赞用户ID',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '点赞时间',
-    UNIQUE KEY (comment_id, user_id),
-    INDEX idx_comment_likes_comment_id (comment_id),
-    INDEX idx_comment_likes_user_id (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-**示例数据：**
-
-```sql
-INSERT INTO comment_likes (comment_id, user_id) VALUES
-(1, 1), (1, 4), (1, 5),
-(3, 2), (3, 5),
-(4, 1), (4, 2), (4, 5),
-(5, 1), (5, 3), (5, 4),
-(6, 2), (6, 5),
-(9, 2), (9, 3), (9, 5),
-(10, 1), (10, 3),
-(11, 2), (11, 4), (11, 5),
-(12, 1), (12, 3), (12, 4), (12, 5),
-(14, 1), (14, 2), (14, 5),
-(16, 1), (16, 2), (16, 4), (16, 5);
-```
-
-#### 2. `venues` 表 - 运动场地
+#### 1. `venues` 表 - 运动场地
 
 ```sql
 CREATE TABLE venues (
@@ -74,7 +43,7 @@ INSERT INTO venues (name, address, category_id, longitude, latitude, is_free, pr
 ('龙泉山', '四川省成都市龙泉驿区龙泉山', 1, 104.269772, 30.582630, 1, '免费', 'low', 3, 1);
 ```
 
-#### 3. `venue_images` 表 - 场地图片
+#### 2. `venue_images` 表 - 场地图片
 
 ```sql
 CREATE TABLE venue_images (
@@ -109,7 +78,7 @@ INSERT INTO venue_images (venue_id, image_url, sequence_number) VALUES
 
 ### 管理后台相关表
 
-#### 4. `admins` 表 - 管理员账户
+#### 3. `admins` 表 - 管理员账户
 
 ```sql
 CREATE TABLE admins (
@@ -134,7 +103,7 @@ INSERT INTO admins (email, password_hash, name, role, last_login) VALUES
 ('usermanager@sportsapp.com', '$2a$10$CfLnwS5KwmQe.GY1JsRxxei3KHm2p5qTEhRxGXcG5fPL1jb1oIyLW', '用户管理员', 'user_manager', '2023-06-11 14:20:00');
 ```
 
-#### 5. `operation_logs` 表 - 操作日志
+#### 4. `operation_logs` 表 - 操作日志
 
 ```sql
 CREATE TABLE operation_logs (
@@ -176,7 +145,7 @@ INSERT INTO operation_logs (admin_id, operation_type, target_type, target_id, de
 
 ### 用户系统升级
 
-#### 6. `user_points` 表 - 用户积分和等级
+#### 5. `user_points` 表 - 用户积分和等级
 
 ```sql
 CREATE TABLE user_points (
@@ -200,7 +169,7 @@ INSERT INTO user_points (user_id, points, level) VALUES
 (5, 320, 3);
 ```
 
-#### 7. `point_transactions` 表 - 积分变更记录
+#### 6. `point_transactions` 表 - 积分变更记录
 
 ```sql
 CREATE TABLE point_transactions (
@@ -237,7 +206,7 @@ INSERT INTO point_transactions (user_id, points, transaction_type, reference_id,
 (5, 20, 'comment_created', '4', '发表评论');
 ```
 
-#### 8. `daily_check_ins` 表 - 每日签到记录
+#### 7. `daily_check_ins` 表 - 每日签到记录
 
 ```sql
 CREATE TABLE daily_check_ins (
@@ -271,7 +240,7 @@ INSERT INTO daily_check_ins (user_id, check_in_date, points_earned) VALUES
 (5, '2023-06-12', 10);
 ```
 
-#### 9. `user_follows` 表 - 用户关注关系
+#### 8. `user_follows` 表 - 用户关注关系
 
 ```sql
 CREATE TABLE user_follows (
@@ -296,7 +265,7 @@ INSERT INTO user_follows (follower_id, followed_id) VALUES
 (5, 1), (5, 2), (5, 4);
 ```
 
-#### 10. `venue_opening_hours` 表 - 场地营业时间
+#### 9. `venue_opening_hours` 表 - 场地营业时间
 
 ```sql
 CREATE TABLE venue_opening_hours (

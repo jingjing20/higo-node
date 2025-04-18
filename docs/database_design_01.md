@@ -224,6 +224,8 @@ INSERT INTO post_likes (post_id, user_id) VALUES
 (6, 1), (6, 2), (6, 4);
 ```
 
+### 评论系统相关表
+
 #### 8. `comments` 表 - 评论
 
 ```sql
@@ -269,4 +271,35 @@ INSERT INTO comments (post_id, user_id, content, parent_id, likes_count) VALUES
 (6, 3, '这次比赛的水平如何？我是业余爱好者。', NULL, 1),
 (6, 6, '比赛定于本周六下午2点，地点在朝阳公园足球场。', 19, 0),
 (6, 6, '都是业余水平，以娱乐为主，欢迎参加。', 20, 0);
+```
+
+#### 9. `comment_likes` 表 - 评论点赞
+
+```sql
+CREATE TABLE comment_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    comment_id INT NOT NULL COMMENT '评论ID',
+    user_id INT NOT NULL COMMENT '点赞用户ID',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '点赞时间',
+    UNIQUE KEY (comment_id, user_id),
+    INDEX idx_comment_likes_comment_id (comment_id),
+    INDEX idx_comment_likes_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+**示例数据：**
+
+```sql
+INSERT INTO comment_likes (comment_id, user_id) VALUES
+(1, 1), (1, 4), (1, 5),
+(3, 2), (3, 5),
+(4, 1), (4, 2), (4, 5),
+(5, 1), (5, 3), (5, 4),
+(6, 2), (6, 5),
+(9, 2), (9, 3), (9, 5),
+(10, 1), (10, 3),
+(11, 2), (11, 4), (11, 5),
+(12, 1), (12, 3), (12, 4), (12, 5),
+(14, 1), (14, 2), (14, 5),
+(16, 1), (16, 2), (16, 4), (16, 5);
 ```
