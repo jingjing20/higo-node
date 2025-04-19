@@ -132,9 +132,11 @@ export const loginUser = async (userInfo: UserModel) => {
     return {
       success: true,
       message: '登录成功',
-      user,
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken
+      data: {
+        user,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken
+      }
     };
   } catch (error) {
     console.error('登录失败:', error);
@@ -307,7 +309,7 @@ export const updateUserAvatar = async (userId: number, avatarUrl: string) => {
       userId
     ]);
 
-    return { success: true, message: '头像更新成功', avatarUrl };
+    return { success: true, message: '头像更新成功', data: { avatarUrl } };
   } catch (error) {
     console.error('更新用户头像失败:', error);
     return { success: false, message: 'UPDATE_USER_AVATAR_FAILED' };
