@@ -12,8 +12,8 @@ const handleServerActiveStatus = () => {
   }, 3600000); // 每3600000毫秒（1小时）发送一次查询
 };
 
-httpServer.listen(APP_PORT, () => {
-  console.log(`🚀 服务已启动在${APP_PORT}端口！`);
+httpServer.listen(Number(APP_PORT), '0.0.0.0', () => {
+  console.log(`🚀 服务已启动在0.0.0.0:${APP_PORT}端口！`);
 });
 
 /**
