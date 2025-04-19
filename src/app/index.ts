@@ -3,12 +3,16 @@ import cors from 'cors';
 import userRouter from '../user/user.router';
 import emailRouter from '../email/email.router';
 import categoryRouter from '../categories/categories.router';
+import postRouter from '../post/post.router';
+import venueRouter from '../venue/venue.router';
 import {
   requestTimeLogger,
   responseFormatter,
   defaultErrorHandler
 } from './app.middleware';
 import { ALLOW_ORIGIN } from './app.config';
+import helmet from 'helmet';
+import path from 'path';
 
 /**
  * 创建应用
@@ -16,9 +20,19 @@ import { ALLOW_ORIGIN } from './app.config';
 const app = express();
 
 /**
- * 请求耗时统计中间件（最先注册，以便记录完整请求时间）
+ * 安全相关设置
  */
-app.use(requestTimeLogger);
+app.use(helmet());
+
+/**
+ * 跨域资源共享
+ */
+app.use(
+  cors({
+    origin: ALLOW_ORIGIN,
+    exposedHeaders: 'X-Total-Count'
+  })
+);
 
 /**
  * 处理 JSON
@@ -36,19 +50,24 @@ app.use(express.text({ type: 'text/xml' }));
 app.use(express.urlencoded({ extended: true }));
 
 /**
- * 跨域资源共享
+ * 请求耗时统计中间件
  */
-app.use(
-  cors({
-    origin: ALLOW_ORIGIN,
-    exposedHeaders: 'X-Total-Count'
-  })
-);
+app.use(requestTimeLogger);
 
 /**
- * 响应格式化中间件（在路由之前注册）
+ * 响应格式化中间件
  */
 app.use(responseFormatter);
+
+/**
+ * 静态资源服务
+ */
+app.use(
+  '/uploads/images',
+  express.static(path.join(process.cwd(), 'uploads/images'), {
+    maxAge: 24 * 60 * 60 * 1000
+  })
+);
 
 /**
  * 路由
@@ -56,9 +75,11 @@ app.use(responseFormatter);
 app.use(userRouter);
 app.use(emailRouter);
 app.use(categoryRouter);
+app.use(postRouter);
+app.use(venueRouter);
 
 /**
- * 应用错误处理中间件（在路由之后）
+ * 应用错误处理中间件
  */
 app.use(defaultErrorHandler);
 

@@ -17,6 +17,10 @@ alwaysApply: true
 
 在理解用户需求、编写代码、解决问题和迭代项目时，您应始终遵循以下原则：
 
+## 包管理工具
+
+-   使用 pnpm 作为项目的包管理工具！
+
 ### 需求 prd
 
 [prd.md](mdc:docs/prd.md)

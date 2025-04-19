@@ -1,4 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
+import { storage as imageStorage } from './storage';
+import path from 'path';
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * 接口耗时统计中间件
@@ -185,4 +189,98 @@ export const defaultErrorHandler = (
   }
 
   response.json({ success: false, code: statusCode, message });
+};
+
+/**
+ * 允许的图片类型
+ */
+const allowedImageTypes = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp'
+];
+
+/**
+ * 上传限制配置
+ */
+const uploadLimits = {
+  fileSize: 5 * 1024 * 1024, // 5MB
+  files: 10 // 最多10个文件
+};
+
+/**
+ * 配置multer存储
+ */
+const multerStorage = multer.memoryStorage();
+
+/**
+ * 文件过滤器
+ */
+const fileFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+) => {
+  // 检查文件类型
+  if (allowedImageTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error(`不支持的文件类型: ${file.mimetype}`));
+  }
+};
+
+/**
+ * 配置multer上传中间件
+ */
+export const upload = multer({
+  storage: multerStorage,
+  limits: uploadLimits,
+  fileFilter: fileFilter
+});
+
+/**
+ * 处理上传的图片并转换为URL
+ * 使用存储服务保存图片
+ */
+export const processUploadedImages = async (
+  req: Request & { files?: Express.Multer.File[] },
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // 检查是否有上传的文件
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      next();
+      return;
+    }
+
+    // 处理每个上传的文件
+    const processedImages = await Promise.all(
+      req.files.map(async (file, index) => {
+        // 获取文件扩展名
+        const ext = path.extname(file.originalname).toLowerCase();
+
+        // 创建唯一文件名
+        const filename = `${Date.now()}-${uuidv4()}${ext}`;
+
+        // 上传图片到存储服务
+        const imageUrl = await imageStorage.uploadImage(file.buffer, filename);
+
+        // 返回图片信息，包含URL和序号
+        return {
+          image_url: imageUrl,
+          sequence_number: index,
+          originalname: file.originalname,
+          size: file.size
+        };
+      })
+    );
+
+    // 将处理后的图片信息添加到请求中
+    req.body.images = processedImages;
+    next();
+  } catch (error) {
+    next(error);
+  }
 };
