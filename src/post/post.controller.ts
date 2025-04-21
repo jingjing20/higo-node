@@ -28,14 +28,7 @@ export const createPost = async (
 
     const postId = await postService.createPost(userId, postData);
 
-    // 如果有图片数据，保存图片
-    if (
-      postData.images &&
-      Array.isArray(postData.images) &&
-      postData.images.length > 0
-    ) {
-      await postService.addPostImages(postId, userId, postData.images);
-    }
+    // 删除图片处理逻辑，由专门的 uploadImages 接口处理
 
     res.status(201).json({
       success: true,
@@ -169,14 +162,7 @@ export const updatePost = async (
       return;
     }
 
-    // 如果有图片数据，更新图片（这里简化处理，实际可能需要先删除旧图片再添加新图片）
-    if (
-      updateData.images &&
-      Array.isArray(updateData.images) &&
-      updateData.images.length > 0
-    ) {
-      await postService.addPostImages(postId, userId, updateData.images);
-    }
+    // 删除图片处理逻辑，由专门的 uploadImages 接口处理
 
     res.status(200).json({
       success: true,
@@ -394,7 +380,7 @@ export const uploadImages = async (
 ): Promise<void> => {
   try {
     const userId = req.user.id;
-    const { post_id } = req.body;
+    const { post_id, replace_existing } = req.body;
 
     // 验证参数
     if (!post_id) {
@@ -427,6 +413,18 @@ export const uploadImages = async (
         message: '无效的帖子ID'
       });
       return;
+    }
+
+    // 如果需要替换现有图片，先删除旧图片
+    if (replace_existing === 'true' || replace_existing === true) {
+      const deleteSuccess = await postService.deletePostImages(postId, userId);
+      if (!deleteSuccess) {
+        res.status(403).json({
+          success: false,
+          message: '您无权为该帖子删除图片或帖子不存在'
+        });
+        return;
+      }
     }
 
     // 保存图片元数据到数据库

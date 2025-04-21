@@ -44,7 +44,7 @@ router.post(
 router.post(
   '/api/upload/images',
   authGuard,
-  upload.array('images', 10), // 最多上传10张图片
+  upload.array('files', 10), // 最多上传10张图片
   processUploadedImages,
   postController.uploadImages
 );

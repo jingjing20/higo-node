@@ -16,7 +16,14 @@ export const createPost = async (
   >
 ): Promise<number> => {
   try {
-    const coordinates = `POINT(${post.coordinates.x}, ${post.coordinates.y})`;
+    const { longitude, latitude } = post.coordinates || {};
+    if (typeof longitude !== 'number' || typeof latitude !== 'number') {
+      throw new Error(
+        `非法坐标值: longitude=${longitude}, latitude=${latitude}`
+      );
+    }
+
+    const coordinates = `POINT(${longitude} ${latitude})`; // 注意中间是空格，不是逗号
     const result = (await queryAsync(
       `INSERT INTO posts
       (user_id, category_id, title, content, type, location, coordinates, is_approved)
@@ -104,8 +111,8 @@ export const getPosts = async (options: {
     return posts.map((post) => ({
       ...post,
       coordinates: {
-        x: post.x,
-        y: post.y
+        longitude: post.x,
+        latitude: post.y
       }
     }));
   } catch (error) {
@@ -154,8 +161,8 @@ export const getPostById = async (postId: number): Promise<Post | null> => {
     return {
       ...post,
       coordinates: {
-        x: post.x,
-        y: post.y
+        longitude: post.x,
+        latitude: post.y
       }
     };
   } catch (error) {
@@ -216,7 +223,9 @@ export const updatePost = async (
 
     if (data.coordinates) {
       updates.push('coordinates = ST_GeomFromText(?)');
-      params.push(`POINT(${data.coordinates.x}, ${data.coordinates.y})`);
+      params.push(
+        `POINT(${data.coordinates.longitude}, ${data.coordinates.latitude})`
+      );
     }
 
     if (updates.length === 0) {
@@ -265,7 +274,7 @@ export const deletePost = async (
       // 删除帖子相关数据
       await queryAsync('DELETE FROM post_images WHERE post_id = ?', [postId]);
       await queryAsync('DELETE FROM post_likes WHERE post_id = ?', [postId]);
-      await queryAsync('DELETE FROM comments WHERE post_id = ?', [postId]);
+      await queryAsync('DELETE FROM post_comments WHERE post_id = ?', [postId]);
       await queryAsync('DELETE FROM posts WHERE id = ?', [postId]);
 
       // 提交事务
@@ -416,7 +425,7 @@ export const addComment = async (
     // 如果有父评论，检查父评论是否存在
     if (parentId) {
       const parentComments = (await queryAsync(
-        'SELECT id FROM comments WHERE id = ? AND post_id = ?',
+        'SELECT id FROM post_comments WHERE id = ? AND post_id = ?',
         [parentId, postId]
       )) as RowDataPacket[];
 
@@ -431,7 +440,7 @@ export const addComment = async (
     try {
       // 添加评论
       const result = (await queryAsync(
-        'INSERT INTO comments (post_id, user_id, content, parent_id) VALUES (?, ?, ?, ?)',
+        'INSERT INTO post_comments (post_id, user_id, content, parent_id) VALUES (?, ?, ?, ?)',
         [postId, userId, content, parentId || null]
       )) as ResultSetHeader;
 
@@ -460,7 +469,7 @@ export const addComment = async (
  */
 export const getPostComments = async (postId: number): Promise<Comment[]> => {
   try {
-    const comments = (await queryAsync(
+    const post_comments = (await queryAsync(
       `SELECT
         c.id,
         c.post_id,
@@ -472,7 +481,7 @@ export const getPostComments = async (postId: number): Promise<Comment[]> => {
         c.updated_at,
         u.nickname as author_name,
         u.avatar_url as author_avatar
-      FROM comments c
+      FROM post_comments c
       JOIN users u ON c.user_id = u.id
       WHERE c.post_id = ?
       ORDER BY
@@ -481,7 +490,7 @@ export const getPostComments = async (postId: number): Promise<Comment[]> => {
       [postId]
     )) as (Comment & RowDataPacket)[];
 
-    return comments;
+    return post_comments;
   } catch (error) {
     throw new Error(`获取帖子评论失败: ${error.message}`);
   }
@@ -542,5 +551,34 @@ export const getPostImages = async (postId: number): Promise<PostImage[]> => {
     return images;
   } catch (error) {
     throw new Error(`获取帖子图片失败: ${error.message}`);
+  }
+};
+
+/**
+ * 删除帖子图片
+ * @param postId 帖子ID
+ * @param userId 用户ID（验证所有权）
+ */
+export const deletePostImages = async (
+  postId: number,
+  userId: number
+): Promise<boolean> => {
+  try {
+    // 验证帖子所有权
+    const posts = (await queryAsync(
+      'SELECT id FROM posts WHERE id = ? AND user_id = ?',
+      [postId, userId]
+    )) as RowDataPacket[];
+
+    if (posts.length === 0) {
+      return false;
+    }
+
+    // 删除帖子的所有图片
+    await queryAsync('DELETE FROM post_images WHERE post_id = ?', [postId]);
+
+    return true;
+  } catch (error) {
+    throw new Error(`删除帖子图片失败: ${error.message}`);
   }
 };
