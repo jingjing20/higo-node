@@ -1883,6 +1883,25 @@
 
 ### 1. 场地系统升级 API
 
+- `POST /api/venues/{venueId}/ratings` - 评分场地
+- `GET /api/venues/{venueId}/ratings` - 获取场地评分
+- `POST /api/venues/{venueId}/reviews` - 评价场地
+- `GET /api/venues/{venueId}/reviews` - 获取场地评价
+
+### 2. 搜索系统 API
+
+- `GET /api/search` - 全站内容搜索
+- `GET /api/search/suggestions` - 搜索建议
+- `GET /api/users/me/searchHistory` - 获取搜索历史
+- `DELETE /api/users/me/searchHistory` - 清除搜索历史
+
+### 3. 数据统计 API
+
+- `GET /api/admin/statistics/users` - 用户活跃度统计
+- `GET /api/admin/statistics/venues` - 热门场地统计
+- `GET /api/admin/statistics/content` - 内容热度分析
+- `GET /api/admin/statistics/daily` - 每日数据报告
+
 ## V2.0 活动版 API
 
 ### 1. 活动系统 API

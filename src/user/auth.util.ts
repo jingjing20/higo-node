@@ -12,8 +12,8 @@ const JWT_SECRET = 'your-jwt-secret-key';
 export const generateToken = (userId: number) => {
   const payload = { id: userId };
 
-  // 生成访问令牌，有效期1小时
-  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+  // 生成访问令牌 后续上线了换成1小时
+  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '300d' });
 
   // 生成刷新令牌，有效期7天
   const refreshToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });

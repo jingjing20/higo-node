@@ -99,10 +99,9 @@ CREATE TABLE categories (
 
 ```sql
 INSERT INTO categories (name, description, icon_url) VALUES
-('登山', '包括远足、徒步、登山等户外爬山活动', 'https://cdn.sportsapp.com/icons/cat_hiking.png'),
-('羽毛球', '室内羽毛球运动及相关活动', 'https://cdn.sportsapp.com/icons/cat_badminton.png'),
-('足球', '包括五人制、七人制、十一人制等足球活动', 'https://cdn.sportsapp.com/icons/cat_football.png'),
-('瑜伽', '各类瑜伽及冥想活动', 'https://cdn.sportsapp.com/icons/cat_yoga.png');
+('篮球', '纯粹的篮球爱好者', 'https://cdn.sportsapp.com/icons/cat_hiking.png'),
+('羽毛球', '技巧与力量的王者', 'https://cdn.sportsapp.com/icons/cat_badminton.png'),
+('徒步', '好看的风景都在路上', 'https://cdn.sportsapp.com/icons/cat_yoga.png');
 ```
 
 #### 4. `user_category_preferences` 表 - 用户兴趣偏好
@@ -226,10 +225,10 @@ INSERT INTO post_likes (post_id, user_id) VALUES
 
 ### 评论系统相关表
 
-#### 8. `comments` 表 - 评论
+#### 8. `post_comments` 表 - 评论
 
 ```sql
-CREATE TABLE comments (
+CREATE TABLE post_comments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     post_id INT NOT NULL COMMENT '关联帖子ID',
     user_id INT NOT NULL COMMENT '评论用户ID',
@@ -248,7 +247,7 @@ CREATE TABLE comments (
 **示例数据：**
 
 ```sql
-INSERT INTO comments (post_id, user_id, content, parent_id, likes_count) VALUES
+INSERT INTO post_comments (post_id, user_id, content, parent_id, likes_count) VALUES
 (1, 2, '这次活动时间安排如何？是一天还是半天？', NULL, 3),
 (1, 1, '计划是上午9点出发，下午4点左右结束，全天活动。', 1, 2),
 (1, 3, '需要自备午餐吗？', NULL, 1),
@@ -273,10 +272,10 @@ INSERT INTO comments (post_id, user_id, content, parent_id, likes_count) VALUES
 (6, 6, '都是业余水平，以娱乐为主，欢迎参加。', 20, 0);
 ```
 
-#### 9. `comment_likes` 表 - 评论点赞
+#### 9. `post_comment_likes` 表 - 评论点赞
 
 ```sql
-CREATE TABLE comment_likes (
+CREATE TABLE post_comment_likes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     comment_id INT NOT NULL COMMENT '评论ID',
     user_id INT NOT NULL COMMENT '点赞用户ID',
@@ -290,7 +289,7 @@ CREATE TABLE comment_likes (
 **示例数据：**
 
 ```sql
-INSERT INTO comment_likes (comment_id, user_id) VALUES
+INSERT INTO post_comment_likes (comment_id, user_id) VALUES
 (1, 1), (1, 4), (1, 5),
 (3, 2), (3, 5),
 (4, 1), (4, 2), (4, 5),
