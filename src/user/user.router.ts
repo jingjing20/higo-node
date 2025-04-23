@@ -4,27 +4,18 @@ import * as userMiddleware from './user.middleware';
 
 const router = express.Router();
 
-/**
- * 认证 API
- */
-// 用户注册
-router.post(
-  '/api/auth/register',
-  userMiddleware.validateUserData,
-  userController.register
-);
-
 // 用户登录
 router.post('/api/auth/login', userController.login);
 
+// 验证码注册登录
+router.post(
+  '/api/auth/verify-code/register',
+  userMiddleware.validateUserData,
+  userController.verifyCodeLogin
+);
+
 // 用户登出
 router.post('/api/auth/logout', userController.logout);
-
-// 忘记密码
-router.post('/api/auth/password/forgot', userController.forgotPassword);
-
-// 重置密码
-router.post('/api/auth/password/reset', userController.resetPassword);
 
 // 刷新令牌
 router.post('/api/auth/refresh', userController.refreshUserToken);

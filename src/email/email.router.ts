@@ -4,14 +4,12 @@ import * as emailController from './email.controller';
 const router = express.Router();
 
 /**
- * 验证邮箱
+ * 发送验证码
  */
-router.get('/api/email/verify', emailController.verifyEmail);
-
-/**
- * 密码重置邮件
- */
-router.post('/api/email/password/reset', emailController.passwordResetEmail);
+router.post(
+  '/api/email/verification-code',
+  emailController.sendVerificationCode
+);
 
 /**
  * 欢迎邮件

@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import { Request } from 'express';
 import { JwtCustomPayload } from './types';
 
@@ -43,13 +42,6 @@ export const getTokenFromRequest = (request: Request) => {
   if (parts.length !== 2 || parts[0] !== 'Bearer') return null;
 
   return parts[1];
-};
-
-/**
- * 生成随机验证令牌
- */
-export const generateVerificationToken = () => {
-  return crypto.randomBytes(32).toString('hex');
 };
 
 /**

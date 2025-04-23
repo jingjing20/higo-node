@@ -1,29 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as userService from './user.service';
-
-/**
- * 注册创建用户
- */
-export const register = async (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
-  // 准备数据
-  const { email, password, nickname } = request.body;
-
-  // 创建用户
-  try {
-    const result = await userService.createUser({ email, password, nickname });
-    if (result.success) {
-      response.status(200).send(result);
-    } else {
-      throw new Error(`${result.message}`);
-    }
-  } catch (error) {
-    next(error);
-  }
-};
+import * as emailService from '../email/email.service';
 
 /**
  * 用户登录
@@ -59,54 +36,6 @@ export const logout = async (
 ) => {
   // 客户端应该清除令牌，服务端不需要处理
   response.status(200).send({ success: true, message: '登出成功' });
-};
-
-/**
- * 忘记密码
- */
-export const forgotPassword = async (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
-  // 准备数据
-  const { email } = request.body;
-
-  // 处理忘记密码
-  try {
-    const result = await userService.forgotPassword(email);
-    if (result.success) {
-      response.status(200).send(result);
-    } else {
-      throw new Error(`${result.message}`);
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * 重置密码
- */
-export const resetPassword = async (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
-  // 准备数据
-  const { token, newPassword } = request.body;
-
-  // 重置密码
-  try {
-    const result = await userService.resetPassword(token, newPassword);
-    if (result.success) {
-      response.status(200).send(result);
-    } else {
-      throw new Error(`${result.message}`);
-    }
-  } catch (error) {
-    next(error);
-  }
 };
 
 /**
@@ -241,6 +170,71 @@ export const getUserById = async (
       response.status(200).send({ success: true, data: publicUser });
     } else {
       throw new Error(`${result.message}`);
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 验证码登录/注册
+ */
+export const verifyCodeLogin = async (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  // 准备数据
+  const { email, code, nickname, password } = request.body;
+
+  try {
+    // 验证验证码
+    const verifyResult = await emailService.verifyCode(email, code);
+
+    if (!verifyResult.success || !verifyResult.isValid) {
+      return response.status(400).send({
+        success: false,
+        message: verifyResult.message
+      });
+    }
+
+    // 检查邮箱是否已注册
+    const userExists = await userService.checkUserExists(email);
+
+    if (userExists) {
+      // 邮箱已注册，执行登录
+      const loginResult = await userService.loginWithEmail(email, password);
+
+      if (loginResult.success) {
+        response.status(200).send(loginResult);
+      } else {
+        response.status(400).send(loginResult);
+      }
+    } else {
+      // 邮箱未注册，执行注册
+      const registerResult = await userService.createUserWithVerifiedEmail({
+        email,
+        password,
+        nickname
+      });
+
+      if (registerResult.success) {
+        // 注册成功，自动登录
+        const loginResult = await userService.loginWithEmail(email, password);
+
+        if (loginResult.success) {
+          response.status(200).send(loginResult);
+        } else {
+          // 注册成功但登录失败，仍然返回成功
+          response.status(200).send({
+            success: true,
+            message: '注册成功，请登录',
+            userId: registerResult.userId
+          });
+        }
+      } else {
+        response.status(400).send(registerResult);
+      }
     }
   } catch (error) {
     next(error);

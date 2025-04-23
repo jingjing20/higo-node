@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import { EMAIL_CONFIG, SENDER } from './email.config';
 import { verificationEmailTemplate } from './templates/verification';
 import { passwordResetEmailTemplate } from './templates/password-reset';
+import { verificationCodeEmailTemplate } from './templates/verification-code';
 import { queryAsync } from '../app/database/database.utils';
 
 /**
@@ -136,5 +137,127 @@ export const verifyEmail = async (token: string) => {
   } catch (error) {
     console.error('验证邮箱失败:', error);
     return { success: false, message: '验证邮箱失败' };
+  }
+};
+
+/**
+ * 发送验证码邮件
+ */
+export const sendVerificationCode = async (
+  email: string,
+  code: string
+): Promise<{ success: boolean; message: string }> => {
+  const subject = '验证码 - HiGo运动平台';
+  const html = verificationCodeEmailTemplate(code);
+
+  return await sendEmail(email, subject, html);
+};
+
+/**
+ * 生成验证码
+ * 生成6位随机数字验证码
+ */
+export const generateVerificationCode = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+/**
+ * 创建验证码记录
+ */
+export const createVerificationCode = async (
+  email: string,
+  code: string,
+  ipAddress?: string,
+  userAgent?: string
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    // 设置过期时间为5分钟后
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+
+    // 创建验证码记录
+    await queryAsync(
+      `INSERT INTO email_verification_codes
+       (email, code, expires_at, is_used, ip_address, user_agent)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [email, code, expiresAt, false, ipAddress, userAgent]
+    );
+
+    return { success: true, message: '验证码创建成功' };
+  } catch (error) {
+    console.error('创建验证码失败:', error);
+    return { success: false, message: '创建验证码失败' };
+  }
+};
+
+/**
+ * 检查验证码
+ */
+export const verifyCode = async (
+  email: string,
+  code: string
+): Promise<{ success: boolean; message: string; isValid?: boolean }> => {
+  try {
+    // 查找未使用的验证码
+    const codes = await queryAsync(
+      `SELECT * FROM email_verification_codes
+       WHERE email = ? AND code = ? AND is_used = false AND expires_at > NOW()
+       ORDER BY created_at DESC LIMIT 1`,
+      [email, code]
+    );
+
+    if (!Array.isArray(codes) || codes.length === 0) {
+      return { success: true, message: '验证码无效或已过期', isValid: false };
+    }
+
+    // 标记验证码为已使用
+    await queryAsync(
+      `UPDATE email_verification_codes SET is_used = true WHERE id = ?`,
+      [codes[0].id]
+    );
+
+    return { success: true, message: '验证码验证成功', isValid: true };
+  } catch (error) {
+    console.error('验证码验证失败:', error);
+    return { success: false, message: '验证码验证失败' };
+  }
+};
+
+/**
+ * 检查是否可以发送验证码
+ * 检查最近是否已经发送过验证码（防止重复发送）
+ */
+export const canSendVerificationCode = async (
+  email: string
+): Promise<{ canSend: boolean; message: string }> => {
+  try {
+    // 查询最近一条验证码记录
+    const codes = await queryAsync(
+      `SELECT * FROM email_verification_codes
+       WHERE email = ?
+       ORDER BY created_at DESC LIMIT 1`,
+      [email]
+    );
+
+    if (Array.isArray(codes) && codes.length > 0) {
+      const lastCode = codes[0];
+      const currentTime = new Date();
+      const lastCreatedTime = new Date(lastCode.created_at);
+
+      // 如果最近一条记录创建时间在1分钟内，则不允许再次发送
+      const timeDiff =
+        (currentTime.getTime() - lastCreatedTime.getTime()) / 1000;
+      if (timeDiff < 60) {
+        return {
+          canSend: false,
+          message: `请等待${Math.ceil(60 - timeDiff)}秒后再试`
+        };
+      }
+    }
+
+    return { canSend: true, message: '可以发送验证码' };
+  } catch (error) {
+    console.error('检查验证码发送状态失败:', error);
+    return { canSend: false, message: '检查验证码发送状态失败' };
   }
 };
