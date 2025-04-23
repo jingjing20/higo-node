@@ -35,7 +35,6 @@ CREATE TABLE users (
     bio TEXT COMMENT '个人简介',
     gender VARCHAR(10) COMMENT '性别',
     location VARCHAR(100) COMMENT '所在地区',
-    is_verified TINYINT(1) DEFAULT 0 COMMENT '是否已验证邮箱',
     is_active TINYINT(1) DEFAULT 1 COMMENT '账号是否激活',
     last_login DATETIME COMMENT '最后登录时间',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -45,40 +44,22 @@ CREATE TABLE users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-**示例数据：**
+#### 2. `email_verification_codes` 验证码表
 
 ```sql
-INSERT INTO users (email, password_hash, nickname, avatar_url, bio, gender, location, is_verified, is_active, last_login) VALUES
-('zhang.wei@example.com', '$2a$10$NpMVJyp7fZOWCemEL8OHGOdgRQ5QAGHE7wtLELUPc7dBcxoDw5vQG', '张伟', 'https://cdn.sportsapp.com/avatars/user1.jpg', '热爱篮球和跑步的IT工程师', '男', '北京市朝阳区', 1, 1, '2023-06-12 08:30:00'),
-('li.na@example.com', '$2a$10$LL1JdTLVeJf7T1hRZKYTb.VgQK9KiXYFc/Y6qNqb.JnO7xIr.3Rx2', '李娜', 'https://cdn.sportsapp.com/avatars/user2.jpg', '羽毛球爱好者，每周打三次', '女', '上海市静安区', 1, 1, '2023-06-11 19:45:00'),
-('wang.fei@example.com', '$2a$10$0j7.9I/mCBGFpJqzjUPveeZFDO3X6X0Ov5Z5XMT92J8oRgPVFgMS6', '王飞', 'https://cdn.sportsapp.com/avatars/user3.jpg', '足球教练，专注青少年足球培训', '男', '广州市天河区', 1, 1, '2023-06-12 10:15:00'),
-('chen.jie@example.com', '$2a$10$9RJP2TZ8KgxGHMUjwvebn.LFjvY7KBW3TrA90QdFj93QLHPVvshTi', '陈杰', 'https://cdn.sportsapp.com/avatars/user4.jpg', '喜欢徒步旅行和户外运动', '男', '成都市武侯区', 1, 1, '2023-06-10 16:20:00'),
-('zhao.min@example.com', '$2a$10$2eNFZ9NUwA68DYu/I6ht0.n1QUaPMoaWVr9DYT8TjdkVNusQ1yPV.', '赵敏', 'https://cdn.sportsapp.com/avatars/user5.jpg', '瑜伽教练，提供专业瑜伽指导', '女', '深圳市南山区', 1, 1, '2023-06-11 14:10:00');
-```
-
-#### 2. `verification_tokens` 表 - 验证令牌
-
-```sql
-CREATE TABLE verification_tokens (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL COMMENT '关联的用户ID',
-    token VARCHAR(100) NOT NULL COMMENT '验证令牌',
-    type VARCHAR(20) NOT NULL COMMENT 'email, password_reset, etc.',
-    expires_at DATETIME NOT NULL COMMENT '过期时间',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    INDEX idx_verification_tokens_user_id (user_id),
-    INDEX idx_verification_tokens_token (token)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-**示例数据：**
-
-```sql
-INSERT INTO verification_tokens (user_id, token, type, expires_at) VALUES
-(1, 'dfac23ef67890abcdef1234567890abcdef12345', 'email', '2023-06-13 08:30:00'),
-(2, 'bcdef12345dfac23ef67890abcdef1234567890a', 'password_reset', '2023-06-14 19:45:00'),
-(3, '7890abcdef12345dfac23ef67890abcdef12345d', 'password_reset', '2023-06-13 10:15:00');
+CREATE TABLE `email_verification_codes` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '验证码记录ID',
+  `email` VARCHAR(255) NOT NULL COMMENT '接收验证码的邮箱',
+  `code` VARCHAR(10) NOT NULL COMMENT '验证码内容',
+  `expires_at` DATETIME NOT NULL COMMENT '验证码过期时间',
+  `is_used` BOOLEAN NOT NULL DEFAULT FALSE COMMENT '验证码是否已使用',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发送时间',
+  `ip_address` VARCHAR(45) DEFAULT NULL COMMENT '请求验证码的IP',
+  `user_agent` TEXT DEFAULT NULL COMMENT '用户请求头信息',
+  PRIMARY KEY (`id`),
+  INDEX (`email`),
+  INDEX (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='邮箱验证码表';
 ```
 
 #### 3. `categories` 表 - 运动类别
