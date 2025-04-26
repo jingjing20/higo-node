@@ -866,7 +866,6 @@
           "email": "zhang.wei@example.com",
           "nickname": "张伟",
           "avatar_url": "https://cdn.sportsapp.com/avatars/user1.jpg",
-          "is_verified": 1,
           "is_active": 1,
           "posts_count": 12, // 发帖数
           "last_login": "2023-06-12 08:30:00",

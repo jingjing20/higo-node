@@ -120,11 +120,6 @@ export const verifyEmail = async (token: string) => {
 
     const user = users[0];
 
-    // 更新用户的验证状态
-    await queryAsync(`UPDATE users SET is_verified = 1 WHERE id = ?`, [
-      verificationToken.user_id
-    ]);
-
     // 删除已使用的验证令牌
     await queryAsync(`DELETE FROM verification_tokens WHERE id = ?`, [
       verificationToken.id

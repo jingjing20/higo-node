@@ -21,25 +21,20 @@ export const loginUser = async (userInfo: UserModel) => {
     ]);
 
     if (!users || users.length === 0) {
-      return { success: false, message: '用户不存在' };
+      return { success: false, message: 'USER_NOT_FOUND' };
     }
 
     const user = users[0] as UserModel;
 
     // 检查账号状态
     if (!user.is_active) {
-      return { success: false, message: '账号已被禁用' };
+      return { success: false, message: 'USER_NOT_ACTIVE' };
     }
 
     // 验证密码
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) {
       return { success: false, message: '密码错误' };
-    }
-
-    // 检查邮箱验证状态
-    if (!user.is_verified) {
-      return { success: false, message: '请先验证邮箱' };
     }
 
     // 更新最后登录时间
@@ -107,7 +102,7 @@ export const refreshToken = async (refreshToken: string) => {
 export const getUserProfile = async (userId: number) => {
   try {
     const users = await queryAsync(
-      `SELECT id, email, nickname, avatar_url, bio, gender, location, is_verified, is_active, created_at
+      `SELECT id, email, nickname, avatar_url, bio, gender, location, is_active, created_at
        FROM users WHERE id = ?`,
       [userId]
     );
@@ -251,9 +246,9 @@ export const createUserWithVerifiedEmail = async (user: UserModel) => {
 
     // 创建用户记录（已验证状态）
     const result = await queryAsync(
-      `INSERT INTO users (email, password_hash, nickname, is_verified, is_active)
-       VALUES (?, ?, ?, ?, ?)`,
-      [email, password_hash, nickname, 1, 1]
+      `INSERT INTO users (email, password_hash, nickname, is_active)
+       VALUES (?, ?, ?, ?)`,
+      [email, password_hash, nickname, 1]
     );
 
     const userId = result.insertId;

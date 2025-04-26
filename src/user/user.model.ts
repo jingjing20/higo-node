@@ -8,7 +8,6 @@ export class UserModel {
   bio?: string;
   gender?: string;
   location?: string;
-  is_verified?: number;
   is_active?: number;
   last_login?: Date;
   created_at?: Date;
