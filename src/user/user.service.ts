@@ -52,9 +52,8 @@ export const loginUser = async (userInfo: UserModel) => {
       success: true,
       message: '登录成功',
       data: {
-        user,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken
+        ...user,
+        token: tokens.accessToken
       }
     };
   } catch (error) {
@@ -169,59 +168,6 @@ export const checkUserExists = async (email: string): Promise<boolean> => {
   } catch (error) {
     console.error('检查用户存在失败:', error);
     return false;
-  }
-};
-
-/**
- * 使用邮箱直接登录
- */
-export const loginWithEmail = async (email: string, password: string) => {
-  try {
-    // 查找用户
-    const users = await queryAsync('SELECT * FROM users WHERE email = ?', [
-      email
-    ]);
-
-    if (!users || users.length === 0) {
-      return { success: false, message: '用户不存在' };
-    }
-
-    const user = users[0] as UserModel;
-
-    // 检查账号状态
-    if (!user.is_active) {
-      return { success: false, message: '账号已被禁用' };
-    }
-
-    // 验证密码
-    const passwordMatch = await bcrypt.compare(password, user.password_hash);
-    if (!passwordMatch) {
-      return { success: false, message: '密码错误' };
-    }
-
-    // 更新最后登录时间
-    await queryAsync(`UPDATE users SET last_login = NOW() WHERE id = ?`, [
-      user.id
-    ]);
-
-    // 生成JWT令牌
-    const tokens = generateToken(user.id);
-
-    // 清除密码等敏感信息
-    delete user.password_hash;
-
-    return {
-      success: true,
-      message: '登录成功',
-      data: {
-        user,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken
-      }
-    };
-  } catch (error) {
-    console.error('登录失败:', error);
-    return { success: false, message: '登录失败' };
   }
 };
 

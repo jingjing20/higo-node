@@ -203,7 +203,7 @@ export const verifyCodeLogin = async (
 
     if (userExists) {
       // 邮箱已注册，执行登录
-      const loginResult = await userService.loginWithEmail(email, password);
+      const loginResult = await userService.loginUser({ email, password });
 
       if (loginResult.success) {
         response.status(200).send(loginResult);
@@ -220,7 +220,7 @@ export const verifyCodeLogin = async (
 
       if (registerResult.success) {
         // 注册成功，自动登录
-        const loginResult = await userService.loginWithEmail(email, password);
+        const loginResult = await userService.loginUser({ email, password });
 
         if (loginResult.success) {
           response.status(200).send(loginResult);
