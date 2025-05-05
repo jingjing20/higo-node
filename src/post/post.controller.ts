@@ -48,14 +48,22 @@ export const createPost = async (
  */
 export const getPosts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { page = 1, limit = 10, category_id, user_id, type } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      category_id,
+      user_id,
+      type,
+      is_self
+    } = req.query;
 
     const options = {
       page: Number(page),
       limit: Number(limit),
       categoryId: category_id ? Number(category_id) : undefined,
       userId: user_id ? Number(user_id) : undefined,
-      type: type as string
+      type: type as string,
+      isSelf: is_self === 'true'
     };
 
     const posts = await postService.getPosts(options);
@@ -90,7 +98,7 @@ export const getPostById = async (
 ): Promise<void> => {
   try {
     const postId = Number(req.params.postId);
-
+    const userId = Number(req.params.userId);
     if (isNaN(postId)) {
       res.status(400).json({
         success: false,
@@ -99,7 +107,7 @@ export const getPostById = async (
       return;
     }
 
-    const post = await postService.getPostById(postId);
+    const post = await postService.getPostById(postId, userId);
 
     if (!post) {
       res.status(404).json({

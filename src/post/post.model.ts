@@ -1,20 +1,23 @@
 export interface Post {
   id: number; // 帖子ID
   user_id: number; // 用户ID
-  category_id?: number; // 类别ID，选填
+  category_id: number | null; // 类别ID，选填
   title: string; // 帖子标题
   content: string; // 帖子内容
   type: string; // 帖子类型
-  location?: string; // 地理位置文字描述，选填
+  location: string | null; // 地理位置文字描述，选填
   coordinates: {
     longitude: number; // 经度
     latitude: number; // 纬度
   }; // 地理位置坐标
-  is_approved: number; // 是否已批准
+  is_approved: boolean; // 是否已批准
   likes_count: number; // 点赞数
   comments_count: number; // 评论数
   created_at: Date; // 创建时间
   updated_at: Date; // 更新时间
+  author_name?: string;
+  author_avatar?: string;
+  is_liked?: boolean;
 }
 
 export interface PostImage {

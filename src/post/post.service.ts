@@ -57,9 +57,10 @@ export const getPosts = async (options: {
   categoryId?: number;
   userId?: number;
   type?: string;
+  isSelf?: boolean;
 }): Promise<Post[]> => {
   try {
-    const { page = 1, limit = 10, categoryId, userId, type } = options;
+    const { page = 1, limit = 10, categoryId, userId, type, isSelf } = options;
     const offset = (page - 1) * limit;
 
     let query = `
@@ -92,7 +93,7 @@ export const getPosts = async (options: {
       queryParams.push(categoryId);
     }
 
-    if (userId) {
+    if (userId && isSelf) {
       query += ' AND p.user_id = ?';
       queryParams.push(userId);
     }
@@ -108,12 +109,27 @@ export const getPosts = async (options: {
     const posts = (await queryAsync(query, queryParams)) as (Post &
       RowDataPacket)[];
 
+    // 如果提供了当前用户ID，查询用户对帖子的点赞状态
+    const postIds = posts.map((post) => post.id);
+    const likedPostsMap = new Map<number, boolean>();
+
+    if (userId && postIds.length > 0) {
+      const likedPosts = (await queryAsync(
+        'SELECT post_id FROM post_likes WHERE user_id = ? AND post_id IN (?)',
+        [userId, postIds]
+      )) as { post_id: number }[];
+      likedPosts.forEach((like) => {
+        likedPostsMap.set(like.post_id, true);
+      });
+    }
+
     return posts.map((post) => ({
       ...post,
       coordinates: {
         longitude: post.x,
         latitude: post.y
-      }
+      },
+      is_liked: likedPostsMap.has(post.id) || false
     }));
   } catch (error) {
     throw new Error(`获取帖子列表失败: ${error.message}`);
@@ -123,9 +139,13 @@ export const getPosts = async (options: {
 /**
  * 获取帖子详情
  * @param postId 帖子ID
+ * @param currentUserId 当前登录用户ID (可选)
  * @returns 帖子详情
  */
-export const getPostById = async (postId: number): Promise<Post | null> => {
+export const getPostById = async (
+  postId: number,
+  userId: number
+): Promise<Post | null> => {
   try {
     const posts = (await queryAsync(
       `SELECT
@@ -157,13 +177,25 @@ export const getPostById = async (postId: number): Promise<Post | null> => {
 
     const post = posts[0];
 
+    // 查询当前用户是否点赞过该帖子
+    let isLiked = false;
+    if (userId) {
+      const likes = (await queryAsync(
+        'SELECT id FROM post_likes WHERE post_id = ? AND user_id = ?',
+        [postId, userId]
+      )) as RowDataPacket[];
+
+      isLiked = likes.length > 0;
+    }
+
     // 转换坐标
     return {
       ...post,
       coordinates: {
         longitude: post.x,
         latitude: post.y
-      }
+      },
+      is_liked: isLiked
     };
   } catch (error) {
     throw new Error(`获取帖子详情失败: ${error.message}`);

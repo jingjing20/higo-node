@@ -101,7 +101,7 @@ export const responseFormatter = (req, res, next) => {
     const formattedData = {
       success: data.success,
       message: data.message || '操作成功',
-      data: data.data || {}
+      data: data.data
     };
 
     return originalJson.call(this, formattedData);
@@ -118,7 +118,7 @@ export const responseFormatter = (req, res, next) => {
     const formattedData = {
       success: data.success,
       message: data.message || '操作成功',
-      data: data.data || {}
+      data: data.data
     };
 
     return originalSend.call(this, formattedData);
