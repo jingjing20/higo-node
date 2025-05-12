@@ -537,7 +537,12 @@ export const getPostComments = async (postId: number): Promise<Comment[]> => {
 export const addPostImages = async (
   postId: number,
   userId: number,
-  images: { image_url: string; sequence_number: number }[]
+  images: {
+    image_url: string;
+    sequence_number: number;
+    originalname: string;
+    size: number;
+  }[]
 ): Promise<boolean> => {
   try {
     // 验证帖子所有权
@@ -555,10 +560,12 @@ export const addPostImages = async (
       const values = images.map((img) => [
         postId,
         img.image_url,
-        img.sequence_number
+        img.sequence_number,
+        img.originalname,
+        img.size
       ]);
       await queryAsync(
-        'INSERT INTO post_images (post_id, image_url, sequence_number) VALUES ?',
+        'INSERT INTO post_images (post_id, image_url, sequence_number, original_name, size) VALUES ?',
         [values]
       );
     }
