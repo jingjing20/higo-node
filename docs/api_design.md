@@ -20,27 +20,15 @@
 
 #### 1.1 认证API
 
-- `POST /api/auth/register` - 用户注册
+- `POST /api/auth/verify-code/register` - 验证码注册登录
 
   - 请求参数:
     ```json
     {
-      "email": "string", // 用户邮箱，必填，唯一
-      "password": "string", // 用户密码，必填，长度8-20位
-      "nickname": "string" // 用户昵称，必填，2-50字符
-    }
-    ```
-  - 返回参数:
-    ```json
-    {
-      "success": true,
-      "data": {
-        "id": 1, // 用户ID
-        "email": "zhang.wei@example.com", // 用户邮箱
-        "nickname": "张伟", // 用户昵称
-        "token": "eyJhbGciOiJ..." // JWT访问令牌
-      },
-      "message": "注册成功"
+      "nickname": "string", // 用户昵称，必填
+      "password": "string", // 用户密码，必填
+      "email": "string", // 用户邮箱，必填
+      "code": "string" // 验证码，必填
     }
     ```
 
@@ -455,7 +443,20 @@
               "id": 2,
               "nickname": "李娜",
               "avatar_url": "https://cdn.sportsapp.com/avatars/user2.jpg"
-            }
+            },
+            "replies": [
+              {
+                "id": 1,
+                "user_id": 3,
+                "content": "我也要参加！",
+                "created_at": "2023-06-10 10:30:00",
+                "user": {
+                  "id": 3,
+                  "nickname": "王飞",
+                  "avatar_url": "https://cdn.sportsapp.com/avatars/user3.jpg"
+                }
+              }
+            ]
           }
           // ... 更多评论
         ]
