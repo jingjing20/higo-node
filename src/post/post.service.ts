@@ -484,7 +484,8 @@ export const addComment = async (
 
       // 提交事务
       await queryAsync('COMMIT');
-      return result.insertId;
+      const comment = await getCommentById(result.insertId);
+      return comment;
     } catch (error) {
       // 回滚事务
       await queryAsync('ROLLBACK');
@@ -499,9 +500,9 @@ export const addComment = async (
  * 获取帖子评论
  * @param postId 帖子ID
  */
-export const getPostComments = async (postId: number): Promise<Comment[]> => {
+export const getPostComments = async (postId: number): Promise<any[]> => {
   try {
-    const post_comments = (await queryAsync(
+    const comments = (await queryAsync(
       `SELECT
         c.id,
         c.post_id,
@@ -511,18 +512,57 @@ export const getPostComments = async (postId: number): Promise<Comment[]> => {
         c.likes_count,
         c.created_at,
         c.updated_at,
-        u.nickname as author_name,
-        u.avatar_url as author_avatar
+        u.nickname,
+        u.avatar_url
       FROM post_comments c
       JOIN users u ON c.user_id = u.id
       WHERE c.post_id = ?
       ORDER BY
-        c.parent_id IS NULL DESC,
         c.created_at ASC`,
       [postId]
-    )) as (Comment & RowDataPacket)[];
+    )) as (Comment &
+      RowDataPacket & { nickname: string; avatar_url: string })[];
 
-    return post_comments;
+    // 构建评论树
+    const commentMap = new Map();
+    const rootComments = [];
+
+    // 首先将所有评论添加到映射中
+    comments.forEach((comment) => {
+      // 格式化评论，添加用户信息和replies数组
+      const formattedComment = {
+        id: comment.id,
+        user_id: comment.user_id,
+        content: comment.content,
+        likes_count: comment.likes_count,
+        created_at: comment.created_at,
+        user: {
+          id: comment.user_id,
+          nickname: comment.nickname,
+          avatar_url: comment.avatar_url
+        },
+        replies: []
+      };
+
+      commentMap.set(comment.id, formattedComment);
+
+      // 如果是顶级评论，直接添加到结果数组
+      if (!comment.parent_id) {
+        rootComments.push(formattedComment);
+      }
+    });
+
+    // 第二次遍历，构建回复关系
+    comments.forEach((comment) => {
+      if (comment.parent_id) {
+        const parentComment = commentMap.get(comment.parent_id);
+        if (parentComment) {
+          parentComment.replies.push(commentMap.get(comment.id));
+        }
+      }
+    });
+
+    return rootComments;
   } catch (error) {
     throw new Error(`获取帖子评论失败: ${error.message}`);
   }
@@ -619,5 +659,58 @@ export const deletePostImages = async (
     return true;
   } catch (error) {
     throw new Error(`删除帖子图片失败: ${error.message}`);
+  }
+};
+
+/**
+ * 获取单条评论详情
+ * @param commentId 评论ID
+ */
+export const getCommentById = async (
+  commentId: number
+): Promise<any | null> => {
+  try {
+    const comments = (await queryAsync(
+      `SELECT
+        c.id,
+        c.post_id,
+        c.user_id,
+        c.content,
+        c.parent_id,
+        c.likes_count,
+        c.created_at,
+        c.updated_at,
+        u.nickname,
+        u.avatar_url
+      FROM post_comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.id = ?`,
+      [commentId]
+    )) as (Comment &
+      RowDataPacket & { nickname: string; avatar_url: string })[];
+
+    if (comments.length === 0) {
+      return null;
+    }
+
+    const comment = comments[0];
+
+    // 格式化评论，添加用户信息
+    const formattedComment = {
+      id: comment.id,
+      user_id: comment.user_id,
+      content: comment.content,
+      likes_count: comment.likes_count,
+      created_at: comment.created_at,
+      user: {
+        id: comment.user_id,
+        nickname: comment.nickname,
+        avatar_url: comment.avatar_url
+      }
+    };
+
+    return formattedComment;
+  } catch (error) {
+    throw new Error(`获取评论详情失败: ${error.message}`);
   }
 };

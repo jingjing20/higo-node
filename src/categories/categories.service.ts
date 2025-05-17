@@ -6,9 +6,7 @@ import { queryAsync } from '../app/database/database.utils';
  */
 export const getAllCategories = async () => {
   try {
-    const categories = await queryAsync(
-      'SELECT * FROM categories ORDER BY name'
-    );
+    const categories = await queryAsync('SELECT * FROM categories ORDER BY id');
 
     return {
       success: true,

@@ -1,6 +1,6 @@
 import express from 'express';
 import * as postController from './post.controller';
-import { authGuard } from '../user/user.middleware';
+import { authGuard, optionalAuthGuard } from '../user/user.middleware';
 import { upload, processUploadedImages } from '../app/app.middleware';
 
 const router = express.Router();
@@ -13,10 +13,10 @@ const router = express.Router();
 router.post('/api/posts', authGuard, postController.createPost);
 
 // 获取帖子列表
-router.get('/api/posts', postController.getPosts);
+router.get('/api/posts', optionalAuthGuard, postController.getPosts);
 
-// 获取帖子详情
-router.get('/api/posts/:postId', postController.getPostById);
+// 获取帖子详情 - 可选认证，用于记录是否已点赞
+router.get('/api/posts/:postId', optionalAuthGuard, postController.getPostById);
 
 // 更新帖子
 router.put('/api/posts/:postId', authGuard, postController.updatePost);
@@ -31,7 +31,18 @@ router.post('/api/posts/:postId/like', authGuard, postController.likePost);
 router.delete('/api/posts/:postId/like', authGuard, postController.unlikePost);
 
 // 获取帖子评论
-router.get('/api/posts/:postId/comments', postController.getPostComments);
+router.get(
+  '/api/posts/:postId/comments',
+  optionalAuthGuard,
+  postController.getPostComments
+);
+
+// 获取单条评论详情
+router.get(
+  '/api/comments/:commentId',
+  optionalAuthGuard,
+  postController.getCommentById
+);
 
 // 评论帖子
 router.post(

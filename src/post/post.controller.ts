@@ -48,20 +48,13 @@ export const createPost = async (
  */
 export const getPosts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      category_id,
-      user_id,
-      type,
-      is_self
-    } = req.query;
+    const { page = 1, limit = 10, category_id, type, is_self } = req.query;
 
     const options = {
       page: Number(page),
       limit: Number(limit),
       categoryId: category_id ? Number(category_id) : undefined,
-      userId: user_id ? Number(user_id) : undefined,
+      userId: req.user.id ? Number(req.user.id) : undefined,
       type: type as string,
       isSelf: is_self === 'true'
     };
@@ -98,7 +91,8 @@ export const getPostById = async (
 ): Promise<void> => {
   try {
     const postId = Number(req.params.postId);
-    const userId = Number(req.params.userId);
+    const userId = req.user ? req.user.id : undefined;
+
     if (isNaN(postId)) {
       res.status(400).json({
         success: false,
@@ -123,9 +117,25 @@ export const getPostById = async (
     // 获取帖子评论
     const comments = await postService.getPostComments(postId);
 
+    // 重构用户信息以符合API设计文档
+    const user = {
+      id: post.user_id,
+      nickname: post.author_name,
+      avatar_url: post.author_avatar
+    };
+
+    // 删除冗余字段
+    delete post.author_name;
+    delete post.author_avatar;
+
     res.status(200).json({
       success: true,
-      data: { ...post, images, comments },
+      data: {
+        ...post,
+        user,
+        images,
+        comments
+      },
       message: '获取帖子详情成功'
     });
   } catch (error) {
@@ -324,7 +334,7 @@ export const addComment = async (
       return;
     }
 
-    const commentId = await postService.addComment(
+    const comment = await postService.addComment(
       postId,
       userId,
       content,
@@ -333,7 +343,7 @@ export const addComment = async (
 
     res.status(201).json({
       success: true,
-      data: { id: commentId },
+      data: comment,
       message: '评论发布成功'
     });
   } catch (error) {
@@ -459,6 +469,47 @@ export const uploadImages = async (
     res.status(500).json({
       success: false,
       message: `上传图片失败: ${error.message}`
+    });
+  }
+};
+
+/**
+ * 获取单条评论详情
+ */
+export const getCommentById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const commentId = Number(req.params.commentId);
+
+    if (isNaN(commentId)) {
+      res.status(400).json({
+        success: false,
+        message: '无效的评论ID'
+      });
+      return;
+    }
+
+    const comment = await postService.getCommentById(commentId);
+
+    if (!comment) {
+      res.status(404).json({
+        success: false,
+        message: '评论不存在'
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: comment,
+      message: '获取评论详情成功'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `获取评论详情失败: ${error.message}`
     });
   }
 };
