@@ -1,6 +1,6 @@
 import express from 'express';
 import * as postController from './post.controller';
-import { authGuard, optionalAuthGuard } from '../user/user.middleware';
+import { authGuard } from '../user/user.middleware';
 import { upload, processUploadedImages } from '../app/app.middleware';
 
 const router = express.Router();
@@ -13,10 +13,17 @@ const router = express.Router();
 router.post('/api/posts', authGuard, postController.createPost);
 
 // 获取帖子列表
-router.get('/api/posts', optionalAuthGuard, postController.getPosts);
+router.get('/api/posts', authGuard, postController.getPosts);
+
+// 获取用户点赞过的帖子列表 - 需要放在带参数路由之前
+router.get(
+  '/api/user/liked-posts',
+  authGuard,
+  postController.getUserLikedPosts
+);
 
 // 获取帖子详情 - 可选认证，用于记录是否已点赞
-router.get('/api/posts/:postId', optionalAuthGuard, postController.getPostById);
+router.get('/api/posts/:postId', authGuard, postController.getPostById);
 
 // 更新帖子
 router.put('/api/posts/:postId', authGuard, postController.updatePost);
@@ -33,14 +40,14 @@ router.delete('/api/posts/:postId/like', authGuard, postController.unlikePost);
 // 获取帖子评论
 router.get(
   '/api/posts/:postId/comments',
-  optionalAuthGuard,
+  authGuard,
   postController.getPostComments
 );
 
 // 获取单条评论详情
 router.get(
   '/api/comments/:commentId',
-  optionalAuthGuard,
+  authGuard,
   postController.getCommentById
 );
 

@@ -37,14 +37,14 @@ export const authGuard = async (
     const token = getTokenFromRequest(request);
 
     if (!token) {
-      return response.status(401).send({ message: '请先登录' });
+      throw new Error('UNAUTHORIZED');
     }
 
     // 验证Token
     const decoded = verifyToken(token);
 
     if (!decoded) {
-      return response.status(401).send({ message: '登录已过期，请重新登录' });
+      throw new Error('TOKEN_EXPIRED');
     }
 
     // 设置用户ID
@@ -54,35 +54,6 @@ export const authGuard = async (
     next();
   } catch (error) {
     next(error);
-  }
-};
-
-/**
- * 可选验证Token - 不会阻止未登录用户访问
- */
-export const optionalAuthGuard = async (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
-  try {
-    // 获取Token
-    const token = getTokenFromRequest(request);
-
-    if (token) {
-      // 验证Token
-      const decoded = verifyToken(token);
-      if (decoded) {
-        // 设置用户ID
-        request.user = { id: decoded.id };
-      }
-    }
-
-    // 无论是否有token，都继续下一步
-    next();
-  } catch (error) {
-    // 验证出错时仍然继续，但不设置用户信息
-    next();
   }
 };
 

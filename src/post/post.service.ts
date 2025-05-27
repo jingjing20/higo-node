@@ -714,3 +714,65 @@ export const getCommentById = async (
     throw new Error(`获取评论详情失败: ${error.message}`);
   }
 };
+
+/**
+ * 获取用户点赞过的帖子列表
+ * @param userId 用户ID
+ * @param options 分页选项
+ * @returns 帖子列表
+ */
+export const getUserLikedPosts = async (
+  userId: number,
+  options: {
+    page?: number;
+    limit?: number;
+  }
+): Promise<Post[]> => {
+  try {
+    const { page = 1, limit = 10 } = options;
+    const offset = (page - 1) * limit;
+
+    // 从点赞表关联查询帖子信息
+    const query = `
+      SELECT
+        p.id,
+        p.user_id,
+        p.category_id,
+        p.title,
+        p.content,
+        p.type,
+        p.location,
+        ST_X(p.coordinates) as x,
+        ST_Y(p.coordinates) as y,
+        p.is_approved,
+        p.likes_count,
+        p.comments_count,
+        p.created_at,
+        p.updated_at,
+        u.nickname as author_name,
+        u.avatar_url as author_avatar,
+        pl.created_at as liked_at
+      FROM post_likes pl
+      JOIN posts p ON pl.post_id = p.id
+      JOIN users u ON p.user_id = u.id
+      WHERE pl.user_id = ? AND p.is_approved = 1
+      ORDER BY pl.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const posts = (await queryAsync(query, [userId, limit, offset])) as (Post &
+      RowDataPacket & { x: number; y: number; liked_at: Date })[];
+
+    // 转换结果格式
+    return posts.map((post) => ({
+      ...post,
+      coordinates: {
+        longitude: post.x,
+        latitude: post.y
+      },
+      is_liked: true // 当前接口返回的都是用户点赞过的帖子
+    }));
+  } catch (error) {
+    throw new Error(`获取用户点赞帖子列表失败: ${error.message}`);
+  }
+};

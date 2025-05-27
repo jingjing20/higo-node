@@ -170,21 +170,13 @@ export const defaultErrorHandler = (
       statusCode = 401;
       message = '令牌已过期';
       break;
-    case 'REFRESH_TOKEN_EXPIRED':
-      statusCode = 401;
-      message = '刷新令牌已过期';
-      break;
-    case 'PASSWORD_RESET_TOKEN_EXPIRED':
-      statusCode = 401;
-      message = '密码重置令牌已过期';
-      break;
     case 'INVALID_EMAIL':
       statusCode = 400;
       message = '无效的邮箱';
       break;
-    case 'INVALID_PASSWORD':
-      statusCode = 400;
-      message = '密码错误';
+    case 'UNAUTHORIZED':
+      statusCode = 401;
+      message = '请先登录';
       break;
   }
 

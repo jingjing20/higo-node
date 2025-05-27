@@ -513,3 +513,42 @@ export const getCommentById = async (
     });
   }
 };
+
+/**
+ * 获取用户点赞过的帖子列表
+ */
+export const getUserLikedPosts = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user.id;
+    const { page = 1, limit = 10 } = req.query;
+
+    const options = {
+      page: Number(page),
+      limit: Number(limit)
+    };
+
+    const posts = await postService.getUserLikedPosts(userId, options);
+
+    // 为每个帖子获取图片
+    const postsWithImages = await Promise.all(
+      posts.map(async (post) => {
+        const images = await postService.getPostImages(post.id);
+        return { ...post, images };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      data: postsWithImages,
+      message: '获取点赞帖子列表成功'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `获取点赞帖子列表失败: ${error.message}`
+    });
+  }
+};
