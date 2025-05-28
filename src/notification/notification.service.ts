@@ -92,7 +92,7 @@ export const getUserNotifications = async (
     }
 
     // 获取通知列表
-    const notifications = (await queryAsync(
+    const notificationsRaw = (await queryAsync(
       `SELECT
          n.id,
          n.recipient_id,
@@ -114,6 +114,12 @@ export const getUserNotifications = async (
        LIMIT ? OFFSET ?`,
       [...queryParams, limit, offset]
     )) as (Notification & RowDataPacket)[];
+
+    // 转换 is_read 字段为布尔值
+    const notifications = notificationsRaw.map((notification) => ({
+      ...notification,
+      is_read: Boolean(notification.is_read)
+    }));
 
     // 获取总数
     const totalResult = (await queryAsync(
@@ -219,7 +225,20 @@ export const getUserNotificationSettings = async (
       [userId]
     )) as (NotificationSettings & RowDataPacket)[];
 
-    return result.length > 0 ? result[0] : null;
+    if (result.length === 0) {
+      return null;
+    }
+
+    // 转换布尔字段
+    const settings = result[0];
+    return {
+      ...settings,
+      post_like_enabled: Boolean(settings.post_like_enabled),
+      post_comment_enabled: Boolean(settings.post_comment_enabled),
+      comment_reply_enabled: Boolean(settings.comment_reply_enabled),
+      push_enabled: Boolean(settings.push_enabled),
+      email_enabled: Boolean(settings.email_enabled)
+    };
   } catch (error) {
     throw new Error(`获取通知设置失败: ${error.message}`);
   }
@@ -374,7 +393,16 @@ const getNotificationTemplate = async (
       [type, language]
     )) as (NotificationTemplate & RowDataPacket)[];
 
-    return result.length > 0 ? result[0] : null;
+    if (result.length === 0) {
+      return null;
+    }
+
+    // 转换布尔字段
+    const template = result[0];
+    return {
+      ...template,
+      is_active: Boolean(template.is_active)
+    };
   } catch (error) {
     return null;
   }
