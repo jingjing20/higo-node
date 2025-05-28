@@ -5,6 +5,7 @@ import emailRouter from '../email/email.router';
 import categoryRouter from '../categories/categories.router';
 import postRouter from '../post/post.router';
 import venueRouter from '../venue/venue.router';
+import notificationRouter from '../notification/notification.router';
 import {
   requestTimeLogger,
   responseFormatter,
@@ -77,6 +78,7 @@ app.use(emailRouter);
 app.use(categoryRouter);
 app.use(postRouter);
 app.use(venueRouter);
+app.use(notificationRouter);
 
 /**
  * 应用错误处理中间件

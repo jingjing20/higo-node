@@ -1,6 +1,11 @@
 import { queryAsync } from '../app/database/database.utils';
 import { Post, PostImage, PostLike, Comment } from './post.model';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import { createNotification } from '../notification/notification.service';
+import {
+  NotificationType,
+  RelatedType
+} from '../notification/notification.model';
 
 /**
  * 创建新帖子
@@ -332,15 +337,17 @@ export const likePost = async (
   userId: number
 ): Promise<boolean> => {
   try {
-    // 检查帖子是否存在
+    // 检查帖子是否存在并获取帖子作者
     const posts = (await queryAsync(
-      'SELECT id FROM posts WHERE id = ? AND is_approved = 1',
+      'SELECT id, user_id FROM posts WHERE id = ? AND is_approved = 1',
       [postId]
     )) as RowDataPacket[];
 
     if (posts.length === 0) {
       return false;
     }
+
+    const postAuthorId = posts[0].user_id;
 
     // 检查是否已点赞
     const likes = (await queryAsync(
@@ -370,6 +377,23 @@ export const likePost = async (
 
       // 提交事务
       await queryAsync('COMMIT');
+
+      // 如果不是自己点赞自己的帖子，发送通知
+      if (userId !== postAuthorId) {
+        try {
+          await createNotification({
+            recipient_id: postAuthorId,
+            sender_id: userId,
+            type: NotificationType.POST_LIKE,
+            related_id: postId,
+            related_type: RelatedType.POST
+          });
+        } catch (notificationError) {
+          console.error('发送点赞通知失败:', notificationError);
+          // 通知失败不影响点赞功能
+        }
+      }
+
       return true;
     } catch (error) {
       // 回滚事务
@@ -444,9 +468,9 @@ export const addComment = async (
   parentId?: number
 ): Promise<number> => {
   try {
-    // 检查帖子是否存在
+    // 检查帖子是否存在并获取帖子作者
     const posts = (await queryAsync(
-      'SELECT id FROM posts WHERE id = ? AND is_approved = 1',
+      'SELECT id, user_id FROM posts WHERE id = ? AND is_approved = 1',
       [postId]
     )) as RowDataPacket[];
 
@@ -454,16 +478,21 @@ export const addComment = async (
       throw new Error('帖子不存在或未通过审核');
     }
 
-    // 如果有父评论，检查父评论是否存在
+    const postAuthorId = posts[0].user_id;
+    let parentCommentAuthorId: number | null = null;
+
+    // 如果有父评论，检查父评论是否存在并获取父评论作者
     if (parentId) {
       const parentComments = (await queryAsync(
-        'SELECT id FROM post_comments WHERE id = ? AND post_id = ?',
+        'SELECT id, user_id FROM post_comments WHERE id = ? AND post_id = ?',
         [parentId, postId]
       )) as RowDataPacket[];
 
       if (parentComments.length === 0) {
         throw new Error('父评论不存在');
       }
+
+      parentCommentAuthorId = parentComments[0].user_id;
     }
 
     // 开始事务
@@ -484,6 +513,37 @@ export const addComment = async (
 
       // 提交事务
       await queryAsync('COMMIT');
+
+      // 发送通知
+      try {
+        if (
+          parentId &&
+          parentCommentAuthorId &&
+          userId !== parentCommentAuthorId
+        ) {
+          // 如果是回复评论，给评论作者发送通知
+          await createNotification({
+            recipient_id: parentCommentAuthorId,
+            sender_id: userId,
+            type: NotificationType.COMMENT_REPLY,
+            related_id: result.insertId,
+            related_type: RelatedType.COMMENT
+          });
+        } else if (!parentId && userId !== postAuthorId) {
+          // 如果是评论帖子，给帖子作者发送通知
+          await createNotification({
+            recipient_id: postAuthorId,
+            sender_id: userId,
+            type: NotificationType.POST_COMMENT,
+            related_id: postId,
+            related_type: RelatedType.POST
+          });
+        }
+      } catch (notificationError) {
+        console.error('发送评论通知失败:', notificationError);
+        // 通知失败不影响评论功能
+      }
+
       const comment = await getCommentById(result.insertId);
       return comment;
     } catch (error) {
